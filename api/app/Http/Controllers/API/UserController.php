@@ -39,4 +39,28 @@ class UserController extends BaseController
 
         return $this->sendResponse($success, 'User registered successfully.');
     }
+
+    public function login(Request $request)
+    {
+        $credentials = [
+            'email' => $request->email,
+            'password' => $request->password
+        ];
+
+        if (auth()->attempt($credentials))
+        {
+            $success['token'] = auth()->user()->createToken('MyApp')->accessToken;
+            return $this->sendResponse($success, 'Login successful');
+        }
+        else 
+        {
+            return $this->sendError('Unauthorised access');       
+        }
+    }
+
+    public function details()
+    {
+        $success['user'] = auth()->user();
+        return $this->sendResponse($success, 'User eloquent model');
+    }
 }
