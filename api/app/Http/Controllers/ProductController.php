@@ -18,6 +18,10 @@ class ProductController extends BaseController
     {
         $products = Product::all();
 
+        if(is_null($products)) {
+            return $this->sendError('Product not found.');
+        }
+
         return $this->sendResponse($products->toArray(), 'Products retrieved successfully');
     }
 

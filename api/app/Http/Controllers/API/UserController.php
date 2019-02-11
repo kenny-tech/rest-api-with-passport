@@ -22,7 +22,7 @@ class UserController extends BaseController
     {
         $validator = Validator::make($request->all(), [
             'name' => 'required',
-            'email' => 'required|email',
+            'email' => 'required|email|unique:users',
             'password' => 'required',
             'c_password' => 'required|same:password',
         ]);
@@ -42,6 +42,15 @@ class UserController extends BaseController
 
     public function login(Request $request)
     {
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|email',
+            'password' => 'required',
+        ]);
+
+        if($validator->fails()){
+            return $this->sendError('Validation Error.', $validator->errors());       
+        }
+
         $credentials = [
             'email' => $request->email,
             'password' => $request->password
@@ -54,7 +63,7 @@ class UserController extends BaseController
         }
         else 
         {
-            return $this->sendError('Unauthorised access');       
+            return $this->sendError('Wrong Email/Password');       
         }
     }
 
