@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\API\BaseController as BaseController;
 use App\Product;
 use Validator;
+use Illuminate\Support\Facades\Auth;
 
 class ProductController extends BaseController
 {
@@ -33,20 +34,43 @@ class ProductController extends BaseController
      */
     public function store(Request $request)
     {
+        // get all input
         $input = $request->all();
 
+        // validates input
         $validator = Validator::make($input, [
             'name' => 'required',
-            'detail' => 'required'
+            'price' => 'required'
         ]);
 
+        // if validation fails, send validation error message
         if($validator->fails()) {
             return $this->sendError('Validation Error.', $validation->errors());
         }
 
-        $product = Product::create($input);
+        // if auth user, create product
+        if(Auth::check())
+        {
+            $product = Product::create([
+                'user_id' => Auth::user()->id,
+                'name' => $request->input('name'),
+                'price' => $request->input('price'),
+            ]);
 
-        return $this->sendResponse($product->toArray(), 'Product created successfully.');
+            if($product) 
+            {
+                return $this->sendResponse($product->toArray(), 'Product added successfully.');
+            }
+            else
+            {
+                return $this->sendError('Unable to add product.', $code = 500);
+            }
+        }
+        else
+        {
+            return $this->sendError('Unathenticated user');
+        }
+
     }
 
     /**
