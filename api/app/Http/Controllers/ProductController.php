@@ -17,21 +17,14 @@ class ProductController extends BaseController
      */
     public function index()
     {
-        if(Auth::check())
+        $products = Auth::user()->products;
+        if($products)
         {
-            $products = Auth::user()->products;
-            if($products)
-            {
-                return $this->sendResponse($products->toArray(), 'Products retrieved successfully');
-            }
-            else
-            {
-                return $this->sendError('No product found.');
-            }
+            return $this->sendResponse($products->toArray(), 'Products retrieved successfully');
         }
         else
         {
-            return $this->sendError('Unathenticated user');
+            return $this->sendError('No product found.');
         }
     }
 
@@ -57,27 +50,19 @@ class ProductController extends BaseController
             return $this->sendError('Validation Error.', $validation->errors());
         }
 
-        // if auth user, create product
-        if(Auth::check())
-        {
-            $product = Product::create([
+        $product = Product::create([
                 'user_id' => Auth::user()->id,
                 'name' => $request->input('name'),
                 'price' => $request->input('price'),
             ]);
 
-            if($product) 
-            {
-                return $this->sendResponse($product->toArray(), 'Product added successfully.');
-            }
-            else
-            {
-                return $this->sendError('Unable to add product.', $code = 500);
-            }
+        if($product) 
+        {
+            return $this->sendResponse($product->toArray(), 'Product added successfully.');
         }
         else
         {
-            return $this->sendError('Unathenticated user');
+            return $this->sendError('Unable to add product.', $code = 500);
         }
 
     }
@@ -88,13 +73,13 @@ class ProductController extends BaseController
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show($id)
+    public function show($product_id)
     {
-        $product = Auth::user()->products()->find($id);
+        $product = Auth::user()->products()->find($product_id);
 
         if(!$product) 
         {
-            return $this->sendError('Product with id '. $id . ' not found.');
+            return $this->sendError('Product with id '. $product_id . ' not found.');
         }
         else
         {
