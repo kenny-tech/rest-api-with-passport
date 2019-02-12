@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\API\BaseController as BaseController;
 use App\Product;
 use Validator;
+use Illuminate\Support\Facades\Auth;
 
 class ProductController extends BaseController
 {
@@ -16,13 +17,15 @@ class ProductController extends BaseController
      */
     public function index()
     {
-        $products = Product::all();
-
-        if(is_null($products)) {
-            return $this->sendError('Product not found.');
+        $products = Auth::user()->products;
+        if($products)
+        {
+            return $this->sendResponse($products->toArray(), 'Products retrieved successfully');
         }
-
-        return $this->sendResponse($products->toArray(), 'Products retrieved successfully');
+        else
+        {
+            return $this->sendError('No product found.');
+        }
     }
 
     /**
@@ -33,20 +36,35 @@ class ProductController extends BaseController
      */
     public function store(Request $request)
     {
+        // get all input
         $input = $request->all();
 
+        // validates input
         $validator = Validator::make($input, [
             'name' => 'required',
-            'detail' => 'required'
+            'price' => 'required'
         ]);
 
+        // if validation fails, send validation error message
         if($validator->fails()) {
             return $this->sendError('Validation Error.', $validation->errors());
         }
 
-        $product = Product::create($input);
+        $product = Product::create([
+                'user_id' => Auth::user()->id,
+                'name' => $request->input('name'),
+                'price' => $request->input('price'),
+            ]);
 
-        return $this->sendResponse($product->toArray(), 'Product created successfully.');
+        if($product) 
+        {
+            return $this->sendResponse($product->toArray(), 'Product added successfully.');
+        }
+        else
+        {
+            return $this->sendError('Unable to add product.', $code = 500);
+        }
+
     }
 
     /**
@@ -55,15 +73,18 @@ class ProductController extends BaseController
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show($id)
+    public function show($product_id)
     {
-        $product = Product::find($id);
+        $product = Auth::user()->products()->find($product_id);
 
-        if(is_null($product)) {
-            return $this->sendError('Product not found.');
+        if(!$product) 
+        {
+            return $this->sendError('Product with id '. $product_id . ' not found.');
         }
-
-        return $this->sendResponse($product->toArray(), 'Product retrieved successfully');
+        else
+        {
+            return $this->sendResponse($product->toArray(), 'Product retrieved successfully.');
+        }
     }
 
     /**
@@ -79,18 +100,27 @@ class ProductController extends BaseController
 
         $validator = Validator::make($input, [
             'name' => 'required',
-            'detail' => 'required'
+            'price' => 'required'
         ]);
 
         if($validator->fails()) {
             return $this->sendError('Validation Error.', $validator->errors());
         }
+        
+        //$productUpdate = Product::find($product->id);
+        $productUpdate = Auth::user()->products()->find($product->id);
 
-        $product->name = $input['name'];
-        $product->detail = $input['detail'];
-        $product->save();
+        $productUpdate->name = $request->input('name');
+        $productUpdate->price = $request->input('price');
 
-        return $this->sendResponse($product->toArray(), 'Product updated successfully.');
+        if($productUpdate->save())
+        {
+            return $this->sendResponse($productUpdate->toArray(), 'Product updated successfully.');
+        }
+        else
+        {
+            return $this->sendError('Unable to update product');
+        }
     }
 
     /**
@@ -99,10 +129,22 @@ class ProductController extends BaseController
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Product $product)
+    public function destroy($product_id)
     {
-        $product->delete();
+        $product = Auth::user()->products()->find($product_id);
 
-        return $this->sendResponse($product->toArray(), 'Product deleted successfully.');
+        if(!$product)
+        {
+            return $this->sendError('Product with id '. $product_id . ' not found.');
+        }
+        
+        if($product->delete())
+        {
+            return $this->sendResponse([], 'Product deleted successfully.');
+        }
+        else
+        {
+            return $this->sendError('Unable to delete product');
+        }
     }
 }
