@@ -144,10 +144,22 @@ class ProductController extends BaseController
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Product $product)
+    public function destroy($product_id)
     {
-        $product->delete();
+        $product = Auth::user()->products()->find($product_id);
 
-        return $this->sendResponse($product->toArray(), 'Product deleted successfully.');
+        if(!$product)
+        {
+            return $this->sendError('Product with id '. $product_id . ' not found.');
+        }
+        
+        if($product->delete())
+        {
+            return $this->sendResponse([], 'Product deleted successfully.');
+        }
+        else
+        {
+            return $this->sendError('Unable to delete product');
+        }
     }
 }
