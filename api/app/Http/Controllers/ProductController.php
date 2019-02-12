@@ -122,7 +122,8 @@ class ProductController extends BaseController
             return $this->sendError('Validation Error.', $validator->errors());
         }
         
-        $productUpdate = Product::find($product->id);
+        //$productUpdate = Product::find($product->id);
+        $productUpdate = Auth::user()->products()->find($product->id);
 
         $productUpdate->name = $request->input('name');
         $productUpdate->price = $request->input('price');
