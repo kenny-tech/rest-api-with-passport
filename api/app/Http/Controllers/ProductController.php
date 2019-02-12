@@ -90,13 +90,16 @@ class ProductController extends BaseController
      */
     public function show($id)
     {
-        $product = Product::find($id);
+        $product = Auth::user()->products()->find($id);
 
-        if(is_null($product)) {
-            return $this->sendError('Product not found.');
+        if(!$product) 
+        {
+            return $this->sendError('Product with id '. $id . ' not found.');
         }
-
-        return $this->sendResponse($product->toArray(), 'Product retrieved successfully');
+        else
+        {
+            return $this->sendResponse($product->toArray(), 'Product retrieved successfully.');
+        }
     }
 
     /**
