@@ -115,18 +115,26 @@ class ProductController extends BaseController
 
         $validator = Validator::make($input, [
             'name' => 'required',
-            'detail' => 'required'
+            'price' => 'required'
         ]);
 
         if($validator->fails()) {
             return $this->sendError('Validation Error.', $validator->errors());
         }
+        
+        $productUpdate = Product::find($product->id);
 
-        $product->name = $input['name'];
-        $product->detail = $input['detail'];
-        $product->save();
+        $productUpdate->name = $request->input('name');
+        $productUpdate->price = $request->input('price');
 
-        return $this->sendResponse($product->toArray(), 'Product updated successfully.');
+        if($productUpdate->save())
+        {
+            return $this->sendResponse($productUpdate->toArray(), 'Product updated successfully.');
+        }
+        else
+        {
+            return $this->sendError('Unable to update product');
+        }
     }
 
     /**
