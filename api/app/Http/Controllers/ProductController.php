@@ -17,13 +17,22 @@ class ProductController extends BaseController
      */
     public function index()
     {
-        $products = Product::all();
-
-        if(is_null($products)) {
-            return $this->sendError('Product not found.');
+        if(Auth::check())
+        {
+            $products = Auth::user()->products;
+            if($products)
+            {
+                return $this->sendResponse($products->toArray(), 'Products retrieved successfully');
+            }
+            else
+            {
+                return $this->sendError('No product found.');
+            }
         }
-
-        return $this->sendResponse($products->toArray(), 'Products retrieved successfully');
+        else
+        {
+            return $this->sendError('Unathenticated user');
+        }
     }
 
     /**
